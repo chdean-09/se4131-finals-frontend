@@ -42,9 +42,9 @@ export function FeedingHistory({ history, isFetching, error }: FeedingHistoryPro
                 {history && history.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 text-slate-700">
-                      <div className="font-medium">{record.createdAt.toLocaleDateString()}</div>
+                      <div className="font-medium">{new Date(record.createdAt).toLocaleDateString()}</div>
                       <div className="text-slate-500 text-xs">
-                        {record.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(record.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </div>
                     </td>
                     <td className="px-6 py-4">

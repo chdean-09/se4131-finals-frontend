@@ -12,7 +12,7 @@ export function PetFeederDashboard() {
   const { error, data, isFetching } = useQuery(feedQuery())
   const { error: scheduleError, data: scheduleData, isFetching: scheduleIsFetching } = useQuery(scheduleQuery())
 
-  const lastFedTime = data && data.length > 0 ? data[0].createdAt : null
+  const lastFedTime = data && data.length > 0 ? new Date(data[0].createdAt) : null
 
   const handleDispense = async () => {
     await fetch(process.env.NEXT_PUBLIC_SERVER_API_URL + "/feed", {
