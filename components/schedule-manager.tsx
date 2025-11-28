@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { CalendarClock, Plus, Trash2 } from "lucide-react"
-import type { Schedule } from "./pet-feeder-dashboard"
+import { Schedule, WeekDays } from "@/lib/queries/scheduleQueries"
 import { DesktopTimePicker } from '@mui/x-date-pickers/DesktopTimePicker';
 
 // --- DAYJS IMPORTS ---
@@ -15,21 +15,32 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
-dayjs.extend(customParseFormat); 
+dayjs.extend(customParseFormat);
 
 interface ScheduleManagerProps {
-  schedules: Schedule[]
-  onAdd: (time: string, days: number[]) => void
+  schedules: Schedule[] | undefined
+  isFetching: boolean
+  error: Error | null
+  onAdd: (time: string, days: WeekDays[]) => void
   onToggle: (id: string) => void
   onDelete: (id: string) => void
 }
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const DAY_INDEX_TO_ENUM = [
+  WeekDays.SUNDAY,
+  WeekDays.MONDAY,
+  WeekDays.TUESDAY,
+  WeekDays.WEDNESDAY,
+  WeekDays.THURSDAY,
+  WeekDays.FRIDAY,
+  WeekDays.SATURDAY
+]
 
-export function ScheduleManager({ schedules, onAdd, onToggle, onDelete }: ScheduleManagerProps) {
+export function ScheduleManager({ schedules, isFetching, error, onAdd, onToggle, onDelete }: ScheduleManagerProps) {
   const [newTime, setNewTime] = useState("08:00")
   const [selectedDays, setSelectedDays] = useState<number[]>([])
-  
+
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -42,17 +53,27 @@ export function ScheduleManager({ schedules, onAdd, onToggle, onDelete }: Schedu
     )
   }
 
-  const formatDays = (days: number[]): string => {
+  const formatDays = (days: WeekDays[]): string => {
     if (days.length === 7) return "Every day"
-    if (days.length === 5 && days.every((d) => d >= 1 && d <= 5)) return "Weekdays"
-    if (days.length === 2 && days.includes(0) && days.includes(6)) return "Weekends"
-    return days.map((d) => DAY_NAMES[d]).join(", ")
+
+    const dayNameMap: Record<WeekDays, string> = {
+      [WeekDays.SUNDAY]: "Sun",
+      [WeekDays.MONDAY]: "Mon",
+      [WeekDays.TUESDAY]: "Tue",
+      [WeekDays.WEDNESDAY]: "Wed",
+      [WeekDays.THURSDAY]: "Thu",
+      [WeekDays.FRIDAY]: "Fri",
+      [WeekDays.SATURDAY]: "Sat"
+    }
+
+    return days.map((d) => dayNameMap[d]).join(", ")
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (newTime && selectedDays.length > 0) {
-      onAdd(newTime, selectedDays)
+      const selectedWeekDays = selectedDays.map(index => DAY_INDEX_TO_ENUM[index])
+      onAdd(newTime, selectedWeekDays)
       setNewTime("08:00")
       setSelectedDays([])
     }
@@ -95,7 +116,7 @@ export function ScheduleManager({ schedules, onAdd, onToggle, onDelete }: Schedu
 
           <div className="space-y-4">
             <label className="text-sm font-medium text-slate-700 block">Select Time</label>
-            
+
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DesktopTimePicker
                 timeSteps={{ minutes: 1 }}
@@ -120,18 +141,26 @@ export function ScheduleManager({ schedules, onAdd, onToggle, onDelete }: Schedu
         </form>
 
         <div className="space-y-3">
-          {schedules.length === 0 && (
+          {isFetching && (
+            <p className="text-center text-slate-400 py-4 text-sm">Loading schedules...</p>
+          )}
+
+          {error && (
+            <p className="text-center text-red-500 py-4 text-sm">Error loading schedules</p>
+          )}
+
+          {schedules && schedules.length === 0 && (
             <p className="text-center text-slate-400 py-4 text-sm">No scheduled feedings yet</p>
           )}
 
-          {schedules.map((schedule) => (
+          {schedules && schedules.map((schedule) => (
             <div
               key={schedule.id}
               className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 transition-colors"
             >
               <div className="flex flex-col gap-1">
                 <div
-                  className={`text-lg font-mono font-medium ${schedule.enabled ? "text-slate-800" : "text-slate-400"}`}
+                  className={`text-lg font-mono font-medium ${schedule.isEnabled ? "text-slate-800" : "text-slate-400"}`}
                 >
                   {schedule.time}
                 </div>
@@ -139,7 +168,7 @@ export function ScheduleManager({ schedules, onAdd, onToggle, onDelete }: Schedu
               </div>
 
               <div className="flex items-center gap-3">
-                <Switch checked={schedule.enabled} onCheckedChange={() => onToggle(schedule.id)} />
+                <Switch checked={schedule.isEnabled} onCheckedChange={() => onToggle(schedule.id)} />
                 <Button
                   variant="ghost"
                   size="icon"

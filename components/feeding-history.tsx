@@ -1,12 +1,14 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { History, Utensils } from "lucide-react"
-import type { FeedingRecord } from "./pet-feeder-dashboard"
+import { Feed } from "@/lib/queries/feedQueries"
 
 interface FeedingHistoryProps {
-  history: FeedingRecord[]
+  isFetching: boolean
+  error: Error | null
+  history: Feed[] | undefined
 }
 
-export function FeedingHistory({ history }: FeedingHistoryProps) {
+export function FeedingHistory({ history, isFetching, error }: FeedingHistoryProps) {
   return (
     <Card className="h-full border-slate-200 shadow-sm">
       <CardHeader className="pb-3 border-b border-slate-100">
@@ -19,9 +21,16 @@ export function FeedingHistory({ history }: FeedingHistoryProps) {
       </CardHeader>
       <CardContent className="p-0">
         <div className="max-h-[400px] overflow-y-auto">
-          {history.length === 0 ? (
+          {isFetching && (
+            <p className="text-center text-slate-400 py-8 text-sm">Loading...</p>
+          )}
+          {error && (
+            <p className="text-center text-red-500 py-8 text-sm">Error loading history</p>
+          )}
+          {history && history.length === 0 && (
             <p className="text-center text-slate-400 py-8 text-sm">No history available</p>
-          ) : (
+          )}
+          {history && history.length > 0 && (
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0">
                 <tr>
@@ -30,22 +39,21 @@ export function FeedingHistory({ history }: FeedingHistoryProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {history.map((record) => (
+                {history && history.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 text-slate-700">
-                      <div className="font-medium">{record.timestamp.toLocaleDateString()}</div>
+                      <div className="font-medium">{record.createdAt.toLocaleDateString()}</div>
                       <div className="text-slate-500 text-xs">
-                        {record.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {record.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          record.type === "manual" ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${record.type === "MANUAL" ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"
+                          }`}
                       >
-                        {record.type === "manual" ? <Utensils className="w-3 h-3" /> : <History className="w-3 h-3" />}
-                        {record.type === "manual" ? "Manual" : "Scheduled"}
+                        {record.type === "MANUAL" ? <Utensils className="w-3 h-3" /> : <History className="w-3 h-3" />}
+                        {record.type === "MANUAL" ? "Manual" : "Scheduled"}
                       </span>
                     </td>
                   </tr>

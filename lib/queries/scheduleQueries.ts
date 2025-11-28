@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-enum WeekDays {
+export enum WeekDays {
   MONDAY = 'MONDAY',
   TUESDAY = 'TUESDAY',
   WEDNESDAY = 'WEDNESDAY',
