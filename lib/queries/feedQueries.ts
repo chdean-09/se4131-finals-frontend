@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
-enum FeedType {
+export enum FeedType {
   SCHEDULED = 'SCHEDULED',
   MANUAL = 'MANUAL',
 }
@@ -8,7 +8,7 @@ enum FeedType {
 export interface Feed {
   id: string;
   createdAt: Date;
-  updatedAt: Date;
+  // updatedAt: Date;
   type: FeedType;
 }
 
